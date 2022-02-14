@@ -59,6 +59,14 @@ if __name__ == '__main__':
 	consoleHandler.setFormatter(logFormatter)
 	logger.addHandler(consoleHandler)
 
+	# Check Variables
+	if not USERNAME:
+		logger.critical('No Username Specified. Exiting')
+		quit()
+
+	if not PASSWORD:
+		logger.critical('No Password Specified. Exiting')
+		quit()
 
 	# Initialize Prometheus Metrics
 	logger.debug("Initializing Prometheus Metrics")
@@ -78,6 +86,9 @@ if __name__ == '__main__':
 	# Set up web session
 	logger.debug("Initializing Web Session to Hypervolt")
 	session = create_authenticated_session()
+	if session == False:
+		logger.critical('Unable to initialize web session. Exiting')
+		quit()
 	# Convert web session cookies to WS format
 	requests_cookies = session.cookies.get_dict()
 	cookies = ''
