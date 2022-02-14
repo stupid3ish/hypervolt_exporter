@@ -4,14 +4,18 @@ import time
 import requests
 import websocket
 import os
+import logging
 
 from dotenv import load_dotenv
 from urllib.parse import parse_qs, urlparse
+from sys import stdout
 
 load_dotenv()
 
 USERNAME = os.getenv('HV_USERNAME')
 PASSWORD = os.getenv('HV_PASSWORD')
+REFRESH_INT = int(os.getenv('REFRESH_INTERVAL', '30'))
+LOG_LEVEL = os.environ.get('LOG_LEVEL', 'WARNING').upper()
 HEADERS = {
 	"content-type": "application/x-www-form-urlencoded",
 	# "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36",
@@ -38,15 +42,26 @@ def create_authenticated_session():
 	reponse = session.post(url, headers=session.headers, data=data)
 	response = session.get('https://api.hypervolt.co.uk/charger/by-owner')
 	if response.status_code != 200:
-		print("It looks like authentication is failing. Exiting.")
+		logger.info("It looks like authentication is failing. Exiting.")
 		return False
-		print("Hypervolt API session created. Storing.")
+	logger.info("Hypervolt API session created. Storing.")
 	return session
 
 
 if __name__ == '__main__':
 
+	# Initialize Logging
+	logger = logging.getLogger('hypervolt_exporter')
+	logger.setLevel(LOG_LEVEL)
+	logFormatter = logging.Formatter\
+	("%(name)-12s %(asctime)s %(levelname)-8s %(message)s")
+	consoleHandler = logging.StreamHandler(stdout) #set streamhandler to stdout
+	consoleHandler.setFormatter(logFormatter)
+	logger.addHandler(consoleHandler)
+
+
 	# Initialize Prometheus Metrics
+	logger.debug("Initializing Prometheus Metrics")
 	info = prom.Gauge('hypervolt_charger_info', 'Charger Summary Info', ['charger_id'])
 	led_brightness = prom.Gauge('hypervolt_charger_led_brightness_percentage', 'Charger LED Brightness', ['charger_id'])
 	schedule_enabled = prom.Gauge('hypervolt_charger_schedule_enabled', 'Charger Schedule Enabled', ['charger_id'])
@@ -58,24 +73,31 @@ if __name__ == '__main__':
 	charge_current = prom.Gauge('hypervolt_charger_charge_current_milliamps', 'Current Charge Current Throughput', ['charger_id'])
 	charge_ccy_cpent = prom.Gauge('hypervolt_charger_charge_ccy_spent', 'Current Charge Currency Spent', ['charger_id'])
 	charge_carbon_saved = prom.Gauge('hypervolt_charger_charge_carbon_saved_grams', 'Current Charge Carbon Saved', ['charger_id'])
+	logger.debug("Metrics Initialized")
 
 	# Set up web session
+	logger.debug("Initializing Web Session to Hypervolt")
 	session = create_authenticated_session()
 	# Convert web session cookies to WS format
 	requests_cookies = session.cookies.get_dict()
 	cookies = ''
 	for cookie in requests_cookies:
 		cookies += "{}={};".format(str(cookie), str(requests_cookies[cookie]))
+	logger.debug("Connection to Hypervolt Succesful")
 
 	# Get Charger ID
+	logger.debug("Getting Hypervolt Charger ID")
 	response = session.get('https://api.hypervolt.co.uk/charger/by-owner')
 	charger_id = response.json()['chargers'][0]['charger_id']
 
 	# Launch web socket for charge data
 	ws = websocket.WebSocket()
 
+	logger.info("Pre-launch setup complete")
 
+	logger.debug("Initializing Web Server")
 	prom.start_http_server(8080)
+	logger.info("Web Server Started")
 
 	while True:
 
@@ -108,8 +130,10 @@ if __name__ == '__main__':
 		try:
 			ws_response = ws.recv()
 		except:
+			logger.debug('Error connecting to Hypervolt WebSocket. Reconnecting')
 			ws.connect("wss://api.hypervolt.co.uk/ws/charger/{}/session/in-progress".format(charger_id), origin="https://hypervolt.co.uk", host="api.hypervolt.co.uk", cookie=cookies)
 			ws_response = ws.recv()
+			logger.debug('Connection to Hypervolt WebSocket Successful')
 
 		ws_result = json.loads(ws_response)
 		# Currently Charging
