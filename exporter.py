@@ -165,4 +165,4 @@ if __name__ == '__main__':
 		# Current Charge Carbon Grams Saved
 		charge_carbon_saved.labels(charger_id).set(ws_result['carbon_saved_grams'])
 
-		time.sleep(15)
+		time.sleep(REFRESH_INT)
