@@ -15,7 +15,6 @@ mkdir ~/git && cd ~/git
 git clone --depth=1 https://github.com/stupid3ish/hypervolt_exporter.git
 cd hypervolt_exporter
 docker build -t hypervolt-exporter .
-
 ```
 
 ## Example Docker Run
