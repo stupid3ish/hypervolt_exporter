@@ -6,7 +6,7 @@ Prometheus Exporter for Hypervolt EV Charger
 This exporter is currently undergoing live testing to ensure stability. It must be considered BETA only.
 Once the code has been tested a docker container will be provided for ease of use. For the time being, you have to build your own.
 
-## Deployment
+## Build
 
 To deploy this to your local environment, we have to build and deploy a local container. In this example, we will work from the home folder.
 
@@ -49,3 +49,17 @@ services:
 ```
 
 The above sample also includes additional configuration variables for tuning/debug.
+
+## Example Prometheus Job
+
+In order to scrape using Prometheus, you will need to set up a new job, pointing to the exporter.
+
+```
+- job_name: 'hypervolt'
+    metrics_path: /metrics
+    scrape_interval: 30s
+    scrape_timeout: 30s
+    static_configs:
+      - targets:
+        - hypervolt-exporter:8080
+```
