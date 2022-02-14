@@ -73,7 +73,6 @@ if __name__ == '__main__':
 
 	# Launch web socket for charge data
 	ws = websocket.WebSocket()
-	ws.connect("wss://api.hypervolt.co.uk/ws/charger/{}/session/in-progress".format(charger_id), origin="https://hypervolt.co.uk", host="api.hypervolt.co.uk", cookie=cookies)
 
 
 	prom.start_http_server(8080)
@@ -106,9 +105,13 @@ if __name__ == '__main__':
 			max_current.labels(charger_id).set(response.json()['milli_amps'])
 
 		# Get Charge Data from WebSocket
-		ws_response = ws.recv()
-		ws_result = json.loads(ws_response)
+		try:
+			ws_response = ws.recv()
+		except:
+			ws.connect("wss://api.hypervolt.co.uk/ws/charger/{}/session/in-progress".format(charger_id), origin="https://hypervolt.co.uk", host="api.hypervolt.co.uk", cookie=cookies)
+			ws_response = ws.recv()
 
+		ws_result = json.loads(ws_response)
 		# Currently Charging
 		current_charging = ws_result['charging']
 		if current_charging == False:
