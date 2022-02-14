@@ -110,6 +110,8 @@ if __name__ == '__main__':
 		response = session.get(url)
 		if response.status_code == 200:
 			led_brightness.labels(charger_id).set(response.json()['brightness'])
+		else:
+			led_brightness.labels(charger_id).set(-1)
 
 		# Schedule Status
 		url =  uri + '/schedule'
@@ -125,6 +127,8 @@ if __name__ == '__main__':
 		response = session.get(url)
 		if response.status_code == 200:
 			max_current.labels(charger_id).set(response.json()['milli_amps'])
+		else:
+			max_current.labels(charger_id).set(-1)
 
 		# Get Charge Data from WebSocket
 		try:
