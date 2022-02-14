@@ -151,7 +151,7 @@ if __name__ == '__main__':
 		ct_current.labels(charger_id).set(ws_result['ct_current'])
 
 		# CT Voltage
-		ct_current.labels(charger_id).set(ws_result['voltage'])
+		ct_voltage.labels(charger_id).set(ws_result['voltage'])
 
 		# Current Charge Milliamps
 		charge_current.labels(charger_id).set(ws_result['true_milli_amps'])
