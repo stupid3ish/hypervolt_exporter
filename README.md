@@ -1,28 +1,20 @@
-# Hypervolt EV Charger Exporter
+# Hypervolt EV Charger Exporter 
 Prometheus Exporter for Hypervolt EV Charger
+
+![Build Status](https://dev.azure.com/stupid3ish/hypervolt_exporter/_apis/build/status/stupid3ish.hypervolt_exporter?branchName=master)
 
 ## Summary
 
-This exporter is currently undergoing live testing to ensure stability. It must be considered BETA only.
-Once the code has been tested a docker container will be provided for ease of use. For the time being, you have to build your own.
+This exporter has been written to pull the available API data provided by Hypervolt, translate and make available as a Prometheus target.
+It has been compiled into a Docker image for ease of use, currently only available in amd64 platform.
 
-## Build
-
-To deploy this to your local environment, we have to build and deploy a local container. In this example, we will work from the home folder.
-
-```
-mkdir ~/git && cd ~/git
-git clone --depth=1 https://github.com/stupid3ish/hypervolt_exporter.git
-cd hypervolt_exporter
-docker build -t hypervolt-exporter .
-```
 
 ## Example Docker Run
 
 To manually start a docker container using the above built image, we can run a single Docker CLI command:
 
 ```
-docker run -p 8080:8080 --name hypervolt-exporter -d hypervolt-exporter:latest \
+docker run -p 8080:8080 --name hypervolt-exporter -d stupid3ish.azurecr.io/hypervolt-exporter:latest \
 -e USERNAME='name@email.com' \
 -e PASSWORD='password'
 ```
@@ -37,7 +29,7 @@ Using a docker-compose file allows for easy replication of deployment:
 version: '3'
 services:
   hypervolt-exporter:
-    image: hypervolt-exporter
+    image: stupid3ish.azurecr.io/hypervolt-exporter:latest
     restart: always
     environment:
         - HV_USERNAME=name@email.com
@@ -55,6 +47,7 @@ The above sample also includes additional configuration variables for tuning/deb
 In order to scrape using Prometheus, you will need to set up a new job, pointing to the exporter.
 
 ```
+...
 - job_name: 'hypervolt'
     metrics_path: /metrics
     scrape_interval: 30s
@@ -62,4 +55,5 @@ In order to scrape using Prometheus, you will need to set up a new job, pointing
     static_configs:
       - targets:
         - hypervolt-exporter:8080
+...
 ```
