@@ -11,7 +11,7 @@ resources:
 variables:
   # Container registry service connection established during pipeline creation
   dockerRegistryServiceConnection: '58daf6ae-2c1a-4cb5-9d8a-0e0be5a65dc1'
-  imageRepository: 'hypervoltexporter'
+  imageRepository: 'hypervolt-exporter'
   containerRegistry: 'stupid3ish.azurecr.io'
   dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
   tag: '$(Build.BuildId)'
@@ -38,4 +38,5 @@ stages:
         dockerfile: $(dockerfilePath)
         containerRegistry: $(dockerRegistryServiceConnection)
         tags: |
+          latest
           $(tag)
