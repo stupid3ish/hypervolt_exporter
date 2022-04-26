@@ -18,6 +18,7 @@ variables:
 
   # Agent VM image name
   vmImageName: 'ubuntu-latest'
+  pool: AzurePool
 
 stages:
 - stage: Build
@@ -26,6 +27,7 @@ stages:
   - job: Build
     displayName: Build
     pool:
+      name: $(pool)
       vmImage: $(vmImageName)
     steps:
     - task: Docker@2
