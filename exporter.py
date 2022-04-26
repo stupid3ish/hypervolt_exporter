@@ -121,8 +121,10 @@ if __name__ == '__main__':
 		response = session.get(url)
 		if response.status_code == 200:
 			led_brightness.labels(charger_id).set(response.json()['brightness'])
+			logger.debug("LED Brightness: {}".format(response.json()['brightness']))
 		else:
 			led_brightness.labels(charger_id).set(-1)
+			logger.debug("Failed to fetch LED Brightness. Setting to -1")
 
 		# Schedule Status
 		url =  uri + '/schedule'
@@ -130,8 +132,10 @@ if __name__ == '__main__':
 		if response.status_code == 200:
 			if response.json()['enabled'] == False:
 				schedule_enabled.labels(charger_id).set(0)
+				logger.debug("Schedule Status: Disabled")
 			else:
 				schedule_enabled.labels(charger_id).set(1)
+				logger.debug("Schedule Status: Enabled")
 			
 		# Max Current Limit
 		url = uri + '/max-current'
@@ -144,36 +148,48 @@ if __name__ == '__main__':
 		# Get Charge Data from WebSocket
 		try:
 			ws_response = ws.recv()
+			logger.debug(json.loads(ws_response))
 		except:
 			logger.debug('Error connecting to Hypervolt WebSocket. Reconnecting')
 			ws.connect("wss://api.hypervolt.co.uk/ws/charger/{}/session/in-progress".format(charger_id), origin="https://hypervolt.co.uk", host="api.hypervolt.co.uk", cookie=cookies)
 			ws_response = ws.recv()
+			logger.debug(json.loads(ws_response))
 			logger.debug('Connection to Hypervolt WebSocket Successful')
 
 		ws_result = json.loads(ws_response)
+		logger.debug(ws_result)
 		# Currently Charging
 		current_charging = ws_result['charging']
 		if current_charging == False:
 			charging.labels(charger_id).set(0)
+			logger.debug("Charging Status: Not Charging")
 		else:
 			charging.labels(charger_id).set(1)
+			logger.debug("Charging Status: Charging")
 
 		# CT Current
 		ct_current.labels(charger_id).set(ws_result['ct_current'])
+		logger.debug("CT Current: {}".format(ws_result['ct_current']))
 
 		# CT Voltage
 		ct_voltage.labels(charger_id).set(ws_result['voltage'])
+		logger.debug("CT Voltage: {}".format(ws_result['voltage']))
 
 		# Current Charge Milliamps
 		charge_current.labels(charger_id).set(ws_result['true_milli_amps'])
+		logger.debug("Charge Current: {}".format(ws_result['true_milli_amps']))
 
 		# Current Charge Watt-Hours
 		charge_watt_hours.labels(charger_id).set(ws_result['watt_hours'])
+		logger.debug("Charge Watt Hours: {}".format(ws_result['watt_hours']))
 
 		# Current Charge Currency Spent
 		charge_ccy_cpent.labels(charger_id).set(ws_result['ccy_spent'])
+		logger.debug("Charge spent: {}".format(ws_result['ccy_spent']))
 
 		# Current Charge Carbon Grams Saved
 		charge_carbon_saved.labels(charger_id).set(ws_result['carbon_saved_grams'])
+		logger.debug("Charge Carbon Saved: {}".format(ws_result['carbon_saved_grams']))
 
+		logger.debug("Sleeping for {} seconds".format(REFRESH_INT))
 		time.sleep(REFRESH_INT)
